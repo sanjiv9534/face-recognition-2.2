@@ -4,6 +4,10 @@ import cv2
 import csv
 import time
 import datetime
+import os
+import numpy as np
+from PIL import Image
+from tkinter import messagebox
 
 root = tk.Tk()
 root.title("Face Recognition Attendance System")
@@ -11,14 +15,15 @@ root.geometry('1280x720')
 root.configure(background='light blue')
 logo_image = tk.PhotoImage(file="images.png")
 logo_label = tk.Label(root, image=logo_image)
-logo_label.place(x=0,y=0)
+logo_label.place(x=0, y=0)
 
-# For title############################################
-title_lbl = tk.Label(root, text="Face Recognition Attendance System", font=("times new roman", 35, "bold"), bg="light blue", fg="navy blue")
+# For title
+title_lbl = tk.Label(root, text="Face Recognition Attendance System", font=("times new roman", 35, "bold"),
+                     bg="light blue", fg="navy blue")
 title_lbl.place(x=200, y=20, width=1280, height=45)
 
-#  labels #################################################3
-lbl = tk.Label(root, text="Enter Roll", width=20, fg="black", bg="light blue", height=2, font=('times', 15, 'bold'))
+# labels
+lbl = tk.Label(root, text="Enter Roll", width=20, fg="black", bg="light blue", font=('times', 15, 'bold'))
 lbl.place(x=400, y=200)
 
 def testVal(inStr, acttyp):
@@ -31,7 +36,7 @@ txt = tk.Entry(root, validate="key", width=20, bg="white", fg="black", font=('ti
 txt['validatecommand'] = (txt.register(testVal), '%P', '%d')
 txt.place(x=750, y=210)
 
-lbl2 = tk.Label(root, text="Enter Name", width=20, fg="black", bg="light blue", height=2, font=('times', 15, 'bold'))
+lbl2 = tk.Label(root, text="Enter Name", width=20, fg="black", bg="light blue", font=('times', 15, 'bold'))
 lbl2.place(x=400, y=310)
 
 txt2 = tk.Entry(root, width=20, bg="white", fg="black", font=('times', 25, 'bold'))
@@ -43,16 +48,19 @@ def clear():
 def clear1():
     txt2.delete(0, 'end')
 
-clearButton = tk.Button(root, text="Clear", command=clear, fg="black", bg="light blue", width=10, height=1, activebackground="light blue", font=('times', 15, 'bold'))
+clearButton = tk.Button(root, text="Clear", command=clear, fg="black", bg="light blue", width=10, height=1,
+                        activebackground="light blue", font=('times', 15, 'bold'))
 clearButton.place(x=1180, y=210)
 
-clearButton1 = tk.Button(root, text="Clear", command=clear1, fg="black", bg="light blue", width=10, height=1, activebackground="light blue", font=('times', 15, 'bold'))
+clearButton1 = tk.Button(root, text="Clear", command=clear1, fg="black", bg="light blue", width=10, height=1,
+                         activebackground="light blue", font=('times', 15, 'bold'))
 clearButton1.place(x=1180, y=310)
 
-AP = tk.Button(root, text="Check Registered Students", fg="black", bg="navy blue", width=19, height=1, activebackground="navy blue", font=('times', 15, 'bold'))
+AP = tk.Button(root, text="Check Registered Students", fg="black", bg="navy blue", width=19, height=1,
+                activebackground="navy blue", font=('times', 15, 'bold'))
 AP.place(x=990, y=410)
 
-## Error screen1#####################################
+# Error screen1
 def del_sc():
     sc.destroy()
 
@@ -61,12 +69,14 @@ def err_screen():
     sc = tk.Tk()
     sc.geometry('300x100')
     sc.iconbitmap('images.png')
-    sc.title('please fill both field ')
+    sc.title('Please fill both fields')
     sc.configure(background='snow')
-    Label(sc,text='Please enter both Roll and Name!',fg='red',bg='white',font=('times', 16, 'bold')).pack()
-    Button(sc,text='OK',command=del_sc,fg="black", bg="lawn green", width=9, height=1, activebackground="Red", font=('times', 15, 'bold')).place(x=90,y=50)
+    Label(sc, text='Please enter both Roll and Name!', fg='red', bg='white',
+          font=('times', 16, 'bold')).pack()
+    Button(sc, text='OK', command=del_sc, fg="black", bg="lawn green", width=9, height=1,
+           activebackground="Red", font=('times', 15, 'bold')).place(x=90, y=50)
 
-## Error screen2######################################################
+# Error screen2
 def del_sc2():
     sc2.destroy()
 
@@ -77,21 +87,19 @@ def err_screen1():
     sc2.iconbitmap('AMS.ico')
     sc2.title('Warning!!')
     sc2.configure(background='snow')
-    Label(sc2,text='Please enter your subject name!!!',fg='red',bg='white',font=('times', 16, 'bold')).pack()
-    Button(sc2,text='OK',command=del_sc2,fg="black", bg="lawn green", width=9, height=1, activebackground="Red", font=('times', 15, 'bold')).place(x=90,y=50)
-    
-    
-    
-###################taking photos#######################################################################################
+    Label(sc2, text='Please enter your subject name!!!', fg='red', bg='white',
+          font=('times', 16, 'bold')).pack()
+    Button(sc2, text='OK', command=del_sc2, fg="black", bg="lawn green", width=9, height=1,
+           activebackground="Red", font=('times', 15, 'bold')).place(x=90, y=50)
+
+# Taking photos
 def taking():
     l1 = txt.get()
     l2 = txt2.get()
     if l1 == '':
         err_screen()
-    
     elif l2 == '':
         err_screen1()
-        
     else:
         try:
             cam = cv2.VideoCapture(0)
@@ -129,24 +137,78 @@ def taking():
         except FileExistsError as F:
             f = 'Student Data already exists'
             Label(root, text=f, bg="Red", width=21).place(x=450, y=400)
-            
-            
-            
-################label#########################################################################
 
-takeImg = tk.Button(root, text="Take Images", command=taking, fg="black", bg="navy blue", width=20, height=3, activebackground="navy blue", font=('times', 15, 'bold'))
+# Train the model
+def trainimg():
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+    try:
+        faces, Id = getImagesAndLabels("StudentDetails/StudentDetails.csv")
+    except Exception as e:
+        l = 'Please make "TrainingImage" folder & put Images'
+        Notification.configure(text=l, bg="SpringGreen3", width=50, font=('times', 18, 'bold'))
+        Notification.place(x=350, y=400)
+        return
+
+    recognizer.train(faces, np.array(Id))
+    try:
+        recognizer.save("TrainingImageLabel/Trainner.yml")
+    except Exception as e:
+        q = 'Please make "TrainingImageLabel" folder'
+        Notification.configure(text=q, bg="SpringGreen3", width=50, font=('times', 18, 'bold'))
+        Notification.place(x=350, y=400)
+        return
+
+    res = "Model Trained"
+    Notification.configure(text=res, bg="SpringGreen3", width=50, font=('times', 18, 'bold'))
+    Notification.place(x=250, y=400)
+
+def getImagesAndLabels(path):
+    imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
+    faceSamples = []
+    Ids = []
+    for imagePath in imagePaths:
+        pilImage = Image.open(imagePath).convert('L')
+        imageNp = np.array(pilImage, 'uint8')
+        Id = int(os.path.split(imagePath)[-1].split(".")[1])
+        faces = detector.detectMultiScale(imageNp)
+        for (x, y, w, h) in faces:
+            faceSamples.append(imageNp[y:y + h, x:x + w])
+            Ids.append(Id)
+    return faceSamples, Ids
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+# message = tk.Label(root, text="Face-Recognition-Based-Attendance-Management-System", bg="cyan", fg="black",
+#                    width=50, height=3, font=('times', 30, 'italic bold'))
+# message.place(x=80, y=20)
+
+Notification = tk.Label(root, text="All things good", bg="Green", fg="white", width=15, height=3,
+                        font=('times', 17, 'bold'))
+
+# Buttons
+takeImg = tk.Button(root, text="Take Images", command=taking, fg="black", bg="navy blue", width=20, height=3,
+                    activebackground="navy blue", font=('times', 15, 'bold'))
 takeImg.place(x=90, y=500)
 
-trainImg = tk.Button(root, text="Train Images", fg="black", bg="navy blue", width=20, height=3, activebackground="navy blue", font=('times', 15, 'bold'))
+trainImg = tk.Button(root, text="Train Images", command=trainimg, fg="black", bg="navy blue", width=20, height=3,
+                     activebackground="navy blue", font=('times', 15, 'bold'))
 trainImg.place(x=390, y=500)
 
-FA = tk.Button(root, text="Automatic Attendance", fg="black", bg="navy blue", width=20, height=3, activebackground="navy blue", font=('times', 15, 'bold'))
+FA = tk.Button(root, text="Automatic Attendance", fg="black", bg="navy blue", width=20, height=3,
+                activebackground="navy blue", font=('times', 15, 'bold'))
 FA.place(x=690, y=500)
 
-quitroot = tk.Button(root, text="Manually Fill Attendance", fg="black", bg="navy blue", width=20, height=3, activebackground="navy blue", font=('times', 15, 'bold'))
+quitroot = tk.Button(root, text="Manually Fill Attendance", fg="black", bg="navy blue", width=20, height=3,
+                     activebackground="navy blue", font=('times', 15, 'bold'))
 quitroot.place(x=990, y=500)
 
-dashboard = tk.Button(root, text="Graph", fg="black", bg="navy blue", width=20, height=3, activebackground="navy blue", font=('times', 15, 'bold'))
+dashboard = tk.Button(root, text="Graph", fg="black", bg="navy blue", width=20, height=3, activebackground="navy blue",
+                      font=('times', 15, 'bold'))
 dashboard.place(x=1290, y=500)
 
 root.mainloop()
