@@ -4,10 +4,9 @@ import cv2
 import csv
 import time
 import datetime
-import os
 import numpy as np
+import os
 from PIL import Image
-from tkinter import messagebox
 
 root = tk.Tk()
 root.title("Face Recognition Attendance System")
@@ -34,13 +33,13 @@ def testVal(inStr, acttyp):
 
 txt = tk.Entry(root, validate="key", width=20, bg="white", fg="black", font=('times', 25, 'bold'))
 txt['validatecommand'] = (txt.register(testVal), '%P', '%d')
-txt.place(x=750, y=210)
+txt.place(x=750, y=200)
 
 lbl2 = tk.Label(root, text="Enter Name", width=20, fg="black", bg="light blue", font=('times', 15, 'bold'))
-lbl2.place(x=400, y=310)
+lbl2.place(x=400, y=300)
 
 txt2 = tk.Entry(root, width=20, bg="white", fg="black", font=('times', 25, 'bold'))
-txt2.place(x=750, y=310)
+txt2.place(x=750, y=300)
 
 def clear():
     txt.delete(0, 'end')
@@ -92,7 +91,7 @@ def err_screen1():
     Button(sc2, text='OK', command=del_sc2, fg="black", bg="lawn green", width=9, height=1,
            activebackground="Red", font=('times', 15, 'bold')).place(x=90, y=50)
 
-# Taking photos
+#################Taking photos###################################################3
 def taking():
     l1 = txt.get()
     l2 = txt2.get()
@@ -137,29 +136,29 @@ def taking():
         except FileExistsError as F:
             f = 'Student Data already exists'
             Label(root, text=f, bg="Red", width=21).place(x=450, y=400)
-
-# Train the model
+            
 def trainimg():
+    # cv2.face.LBPHFaceRecognizer_create() 
     recognizer = cv2.face.LBPHFaceRecognizer_create()
+    global detector
     detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
     try:
-        faces, Id = getImagesAndLabels("StudentDetails/StudentDetails.csv")
+        global faces,Id
+        faces, Id = getImagesAndLabels("TrainingImage")
     except Exception as e:
-        l = 'Please make "TrainingImage" folder & put Images'
+        l='please make "TrainingImage" folder & put Images'
         Notification.configure(text=l, bg="SpringGreen3", width=50, font=('times', 18, 'bold'))
         Notification.place(x=350, y=400)
-        return
 
     recognizer.train(faces, np.array(Id))
     try:
-        recognizer.save("TrainingImageLabel/Trainner.yml")
+        recognizer.save("TrainingImageLabel\Trainner.yml")
     except Exception as e:
-        q = 'Please make "TrainingImageLabel" folder'
+        q='Please make "TrainingImageLabel" folder'
         Notification.configure(text=q, bg="SpringGreen3", width=50, font=('times', 18, 'bold'))
         Notification.place(x=350, y=400)
-        return
 
-    res = "Model Trained"
+    res = "Model Trained"  
     Notification.configure(text=res, bg="SpringGreen3", width=50, font=('times', 18, 'bold'))
     Notification.place(x=250, y=400)
 
@@ -170,6 +169,7 @@ def getImagesAndLabels(path):
     for imagePath in imagePaths:
         pilImage = Image.open(imagePath).convert('L')
         imageNp = np.array(pilImage, 'uint8')
+
         Id = int(os.path.split(imagePath)[-1].split(".")[1])
         faces = detector.detectMultiScale(imageNp)
         for (x, y, w, h) in faces:
@@ -177,20 +177,29 @@ def getImagesAndLabels(path):
             Ids.append(Id)
     return faceSamples, Ids
 
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
 def on_closing():
+    from tkinter import messagebox
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         root.destroy()
+root.protocol("WM_DELETE_root", on_closing)
 
-root.protocol("WM_DELETE_WINDOW", on_closing)
+# message = tk.Label(root, text="", bg="cyan", fg="black", width=50,
+#                    height=3, font=('times', 30, 'italic bold '))
 
-# message = tk.Label(root, text="Face-Recognition-Based-Attendance-Management-System", bg="cyan", fg="black",
-#                    width=50, height=3, font=('times', 30, 'italic bold'))
 # message.place(x=80, y=20)
 
-Notification = tk.Label(root, text="All things good", bg="Green", fg="white", width=15, height=3,
-                        font=('times', 17, 'bold'))
+Notification = tk.Label(root, text="All things good", bg="Green", fg="white", width=15,
+                      height=3, font=('times', 17, 'bold')) 
+            
+            
 
-# Buttons
+
+# Buttons#################################################################################################################
+Notification = tk.Label(root, text="all are good", bg="Green", fg="red", width=15,
+                      height=3, font=('times', 17, 'bold'))
 takeImg = tk.Button(root, text="Take Images", command=taking, fg="black", bg="navy blue", width=20, height=3,
                     activebackground="navy blue", font=('times', 15, 'bold'))
 takeImg.place(x=90, y=500)
